@@ -1,0 +1,9 @@
+<div class="container mt-4">
+    <h2>Carrello</h2>
+    <ul class="list-group">
+        <li class="list-group-item" *ngFor="let item of items">
+            {{ item.name }} - {{ item.price | currency: 'EUR': 'symbol' }}
+        </li>
+    </ul>
+    <button class="btn btn-danger mt-3" (click)="clearCart()">Svuota carrello</button>
+</div>
