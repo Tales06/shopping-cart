@@ -1,25 +1,60 @@
-import { Component, OnInit } from '@angular/core';
-import { CartService } from '../cart.service';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { CartService } from '../services/cart.service';
+import { Product } from '../services/product.service';
 import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { CartItemInterface } from '../interfaces/CartItemInterface';
 
 @Component({
   selector: 'app-cart',
-  standalone: true,
-  imports: [CommonModule],
   templateUrl: './cart.component.html',
-  styleUrl: './cart.component.scss'
-})
-export class CartComponent implements OnInit{
-  items: any[] = []; // Inizializza come array vuoto
+  styleUrls: ['./cart.component.scss'],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    RouterModule,
 
-  constructor(private cartService: CartService) { }
+  ]
+})
+export class CartComponent implements OnInit {
+  total: number = 0;
+  cartItems: CartItemInterface[] = [];
+
+
+  constructor(private cartService: CartService) {}
 
   ngOnInit(): void {
-    // Inizializza gli articoli durante l'evento OnInit
-    this.items = this.cartService.getItems();
+    this.cartService.getCart().subscribe({
+      next: (res) => {
+        this.cartItems = res.items;
+        console.log('Carrello:', this.cartItems);
+        this.calculateTotal();
+      },
+      error: (err) => console.error(err),
+    });
   }
 
-  clearCart() {
-    this.items = this.cartService.clearCart();
+   updateQuantity(item: Product) {
+    //TODO
+    this.calculateTotal();
+  }
+
+  removeFromCart(productId: string): void {
+    this.cartService.removeFromCart(productId).subscribe({
+      next: () => {
+        console.log(productId)
+        this.cartItems = this.cartItems.filter(item => item.productId._id !== productId);
+        this.calculateTotal();
+      },
+      error: (err) => console.error(err),
+    });
+  }
+
+  calculateTotal() {
+    this.total = this.cartItems.reduce((sum, item) => sum + item.productId.price * item.quantity, 0);
+    console.log('Totale carrello:', this.total);
   }
 }
+

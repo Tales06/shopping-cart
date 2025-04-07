@@ -1,26 +1,60 @@
-import { Component } from '@angular/core';
-import { CartService } from '../cart.service';
+import { Component, OnInit } from '@angular/core';
+import { _ProductService, Product } from '../services/product.service';
+import { CartService } from '../services/cart.service';
 import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-home',
-  standalone: true,
-  imports: [CommonModule],
   templateUrl: './home.component.html',
-  styleUrl: './home.component.scss'
+  styleUrls: ['./home.component.scss'],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    RouterModule,
+  ]
 })
+export class HomeComponent implements OnInit {
+  products: Product[] = [];
 
-export class HomeComponent {
-  products = [
-    { name: 'Prodotto 1', description: 'Descrizione 1', price: 10 },
-    { name: 'Prodotto 2', description: 'Descrizione 2', price: 20 },
-    { name: 'Prodotto 3', description: 'Descrizione 3', price: 30 },
-  ];
+  constructor(private productService: _ProductService, private cartService: CartService, private snackBar: MatSnackBar) { }
 
-  constructor(private cartService: CartService) { }
+  ngOnInit(): void {
+    this.productService.getProducts().subscribe((data) => {
+      this.products = data;
+    });
+  }
 
-  addToCart(product: any) {
-    this.cartService.addToCart(product);
-    alert('Prodotto aggiunto al carrello!');
+  addToCart(product: Product): void {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      this.snackBar.open('Effettua il login per aggiungere prodotti al carrello.', 'Chiudi', {
+        duration: 3000,
+        panelClass: ['snackbar-warning']
+      });
+      return;
+    }
+
+    this.cartService.addToCart(product).subscribe({
+      next: () => {
+        console.log('Prodotto aggiunto al carrello:', product);
+        this.snackBar.open('Prodotto aggiunto al carrello!', 'Chiudi', {
+          duration: 3000,
+          panelClass: ['snackbar-success']
+        });
+      },
+      error: (err) => {
+        console.error('Errore durante l\'aggiunta al carrello:', err);
+        this.snackBar.open('Errore. Prova ad accedere di nuovo.', 'Chiudi', {
+          duration: 3000,
+          panelClass: ['snackbar-error']
+        });
+      }
+
+    });
   }
 }
